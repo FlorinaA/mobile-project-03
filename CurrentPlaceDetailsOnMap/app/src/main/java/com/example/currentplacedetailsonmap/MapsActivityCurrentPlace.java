@@ -89,7 +89,7 @@ public class MapsActivityCurrentPlace extends AppCompatActivity
     private String[] mLikelyPlaceAttributions;
     private LatLng[] mLikelyPlaceLatLngs;
 
-    // FIXME: If this is broken
+    // Geofencing variables
     private enum PendingGeofenceTask {
         ADD, REMOVE, NONE
     }
@@ -116,15 +116,15 @@ public class MapsActivityCurrentPlace extends AppCompatActivity
         // Retrieve the content view that renders the map.
         setContentView(R.layout.activity_maps);
 
-        // FIXME: It this is broken
+        // Initialize geofencing
         mGeofencingClient = LocationServices.getGeofencingClient(this);
         mGeofenceList = new ArrayList<>();
         textLat = (TextView) findViewById((R.id.lat));
         textLong = (TextView) findViewById((R.id.lon));
 
+        // Define geonfences and add them on map.
         populateGeofenceList();
         addGeofences();
-        // FIXME ---
 
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(this, null);
@@ -233,7 +233,7 @@ public class MapsActivityCurrentPlace extends AppCompatActivity
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
 
-        // FIXME: If this doesn't work
+        // Show geofences on map
         addGeofenceCircles();
 
     }
@@ -266,7 +266,6 @@ public class MapsActivityCurrentPlace extends AppCompatActivity
      */
     @Override
     public void onComplete(@NonNull Task<Void> task) {
-        // TODO: Important function. Handler for add/remove Geofence.
         mPendingGeofenceTask = PendingGeofenceTask.NONE;
         if (task.isSuccessful()) {
             updateGeofencesAdded(!getGeofencesAdded());
@@ -303,7 +302,7 @@ public class MapsActivityCurrentPlace extends AppCompatActivity
                                     new LatLng(mLastKnownLocation.getLatitude(),
                                             mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
 
-                            // FIXME
+                            // FIXME Updates Lat and Long in TextViews. This runs only one time.
                             Log.d(TAG, String.format("Lat: %6f", mLastKnownLocation.getLatitude()));
                             Log.d(TAG, String.format("Long: %6f", mLastKnownLocation.getLongitude()));
 
@@ -528,7 +527,6 @@ public class MapsActivityCurrentPlace extends AppCompatActivity
      * Also specifies how the geofence notifications are initially triggered.
      */
     private GeofencingRequest getGeofencingRequest() {
-        // TODO Read documentation GeofencingRequest.Builder
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
 
         // The INITIAL_TRIGGER_ENTER flag indicates that geofencing service should trigger a
@@ -551,7 +549,6 @@ public class MapsActivityCurrentPlace extends AppCompatActivity
      * @return A PendingIntent for the IntentService that handles geofence transitions.
      */
     private PendingIntent getGeofencePendingIntent() {
-        // TODO Read documentation PendingIntent
 
         // Reuse the PendingIntent if we already have it.
         if (mGeofencePendingIntent != null) {

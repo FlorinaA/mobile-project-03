@@ -36,19 +36,15 @@ final class Constants {
     static final HashMap<String, LatLng> BAY_AREA_LANDMARKS = new HashMap<>();
 
     static {
-        // San Francisco International Airport.
-        BAY_AREA_LANDMARKS.put("SFO", new LatLng(37.621313, -122.378955));
 
-        // Googleplex.
-        BAY_AREA_LANDMARKS.put("GOOGLE", new LatLng(37.422611,-122.0840577));
-
+        // TODO: Set the landmark locations here... 
         // 37 William Street
         BAY_AREA_LANDMARKS.put("37-William", new LatLng(42.267241, -71.807712));
 
         // Fuller labs
-//        BAY_AREA_LANDMARKS.put("Fuller", new LatLng(42.274997, -71.806383));
+        BAY_AREA_LANDMARKS.put("Fuller", new LatLng(42.274997, -71.806383));
 
         // Gordon Library
-//        BAY_AREA_LANDMARKS.put("Library", new LatLng(42.274215, -71.806393));
+        BAY_AREA_LANDMARKS.put("Library", new LatLng(42.274215, -71.806393));
     }
 }
