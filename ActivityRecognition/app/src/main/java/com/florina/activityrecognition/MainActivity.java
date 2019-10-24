@@ -24,6 +24,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
@@ -56,6 +57,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private ImageView activityImage;
     ArrayList<Long> startTime = new ArrayList<>();
     ArrayList<Long> endTime = new ArrayList<>();
+
+    private static MediaPlayer mediaPlayer;
+
 
 
     @Override
@@ -104,6 +108,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onPause() {
         super.onPause();
         unregisterHandler();
+        mediaPlayer.release();
+        mediaPlayer = null;
     }
 
     @Override
@@ -198,18 +204,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
     }
 
-    public void displayImage(String text){
+
+    public void playMusic(){
+        mediaPlayer = MediaPlayer.create(this, R.raw.beat_02);
+        mediaPlayer.setLooping(true);
+        mediaPlayer.start();
+    }
+
+    public void displayImageAndAudio(String text){
+
         switch(text){
             case "IN_VEHICLE":
                 activityImage.setImageResource(R.drawable.in_vehicle);
                 break;
             case "RUNNING":
+                playMusic();
                 activityImage.setImageResource(R.drawable.running);
                 break;
             case "STILL":
                 activityImage.setImageResource(R.drawable.still);
                 break;
             case "WALKING":
+                playMusic();
                 activityImage.setImageResource(R.drawable.walking);
                 break;
             default:
@@ -217,7 +233,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
         }
 
+
     }
+
+
     public class ResponseReceiver extends BroadcastReceiver {
         public static final String ACTION_RESP =
                 "com.mamlambo.intent.action.MESSAGE_PROCESSED";
@@ -230,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             String text = intent.getStringExtra(TransitionIntentService.PARAM_OUT_MSG);
             startTime.add(intent.getLongExtra(TransitionIntentService.ENTER_TIME, 0));
             endTime.add(intent.getLongExtra(TransitionIntentService.LEAVE_TIME, 0));
-            displayImage(text);
+            displayImageAndAudio(text);
             String timeTaken = "";
             Log.d(TAG, "STARTIME: " + startTime);
             Log.d(TAG, "ENDTIME: " + endTime);
