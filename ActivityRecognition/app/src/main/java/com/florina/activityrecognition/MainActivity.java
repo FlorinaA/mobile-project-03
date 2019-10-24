@@ -215,6 +215,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         switch(text){
             case "IN_VEHICLE":
+                mediaPlayer.stop();
                 activityImage.setImageResource(R.drawable.in_vehicle);
                 break;
             case "RUNNING":
@@ -222,6 +223,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 activityImage.setImageResource(R.drawable.running);
                 break;
             case "STILL":
+                mediaPlayer.stop();
                 activityImage.setImageResource(R.drawable.still);
                 break;
             case "WALKING":
@@ -229,6 +231,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 activityImage.setImageResource(R.drawable.walking);
                 break;
             default:
+                mediaPlayer.stop();
                 activityImage.setImageResource(R.drawable.still);
                 break;
         }
