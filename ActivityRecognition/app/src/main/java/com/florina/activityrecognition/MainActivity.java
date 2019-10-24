@@ -48,12 +48,55 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity
-        implements OnMapReadyCallback, OnCompleteListener<Void> {
+import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.ActivityRecognitionClient;
+import com.google.android.gms.location.DetectedActivity;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.media.MediaPlayer;
+import android.widget.ImageView;
+
+import com.google.android.gms.location.ActivityTransition;
+import com.google.android.gms.location.ActivityTransitionEvent;
+import com.google.android.gms.location.ActivityTransitionRequest;
+import com.google.android.gms.location.ActivityTransitionResult;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class MainActivity extends AppCompatActivity implements SensorEventListener, StepListener,
+        OnMapReadyCallback, OnCompleteListener<Void>  {
+    private TextView textView;
+    private StepDetector simpleStepDetector;
+    private SensorManager sensorManager;
+    private Sensor accel;
+    private int numSteps;
+    private TextView TvSteps;
+
+    //    Activity Recognition
     private static final String TAG = MainActivity.class.getSimpleName();
+    private List<ActivityTransition> transitions;
+    private ActivityRecognitionClient activityRecognitionClient;
+    private PendingIntent transitionPendingIntent;
+    private Context mContext;
+    private ResponseReceiver receiver;
+    private ImageView activityImage;
+    ArrayList<Long> startTime = new ArrayList<>();
+    ArrayList<Long> endTime = new ArrayList<>();
+
+    private static MediaPlayer mediaPlayer;
+
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
 
@@ -94,7 +137,7 @@ public class MainActivity extends AppCompatActivity
     private GeofencingClient mGeofencingClient;
     private ArrayList<Geofence> mGeofenceList;
     Circle mCircle;
-//    private TextView textLat;
+    //    private TextView textLat;
 //    private TextView textLong;
     private PendingIntent mGeofencePendingIntent;
     private PendingGeofenceTask mPendingGeofenceTask = PendingGeofenceTask.NONE;
@@ -106,6 +149,10 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setLogo(R.mipmap.ic_launcher_round);
+        getSupportActionBar().setDisplayUseLogoEnabled(true);
+
         super.onCreate(savedInstanceState);
 
         // Retrieve location and camera position from saved instance state.
@@ -143,6 +190,29 @@ public class MainActivity extends AppCompatActivity
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        simpleStepDetector = new StepDetector();
+        simpleStepDetector.registerListener(this);
+
+        TvSteps = (TextView) findViewById(R.id.tv_steps);
+        numSteps = -1;
+        sensorManager.registerListener(MainActivity.this, accel, SensorManager.SENSOR_DELAY_FASTEST);
+//        ACTIVITY RECOGNITION
+        activityImage = findViewById(R.id.activityImage);
+        textView = findViewById(R.id.activityText);
+        mContext = this;
+        activityRecognitionClient = ActivityRecognition.getClient(mContext);
+
+        Intent intent = new Intent(this, TransitionIntentService.class);
+        transitionPendingIntent = PendingIntent.getService(this, 100, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        IntentFilter filter = new IntentFilter(ResponseReceiver.ACTION_RESP);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        receiver = new ResponseReceiver();
+        registerReceiver(receiver, filter);
+//        registerHandler();
 
     }
 
@@ -394,12 +464,12 @@ public class MainActivity extends AppCompatActivity
                                 PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
 
                                 // Set the count, handling cases where less than 5 entries are returned.
-                                int count;
-                                if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
-                                    count = likelyPlaces.getCount();
-                                } else {
-                                    count = M_MAX_ENTRIES;
-                                }
+                                int count=0;
+//                                if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
+//                                    count = likelyPlaces.getCount();
+//                                } else {
+//                                    count = M_MAX_ENTRIES;
+//                                }
 
                                 int i = 0;
                                 mLikelyPlaceNames = new String[count];
@@ -407,23 +477,23 @@ public class MainActivity extends AppCompatActivity
                                 mLikelyPlaceAttributions = new String[count];
                                 mLikelyPlaceLatLngs = new LatLng[count];
 
-                                for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                                    // Build a list of likely places to show the user.
-                                    mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
-                                    mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
-                                            .getAddress();
-                                    mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
-                                            .getAttributions();
-                                    mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
-
-                                    i++;
-                                    if (i > (count - 1)) {
-                                        break;
-                                    }
-                                }
+//                                for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+//                                    // Build a list of likely places to show the user.
+//                                    mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
+//                                    mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
+//                                            .getAddress();
+//                                    mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
+//                                            .getAttributions();
+//                                    mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
+//
+//                                    i++;
+//                                    if (i > (count - 1)) {
+//                                        break;
+//                                    }
+//                                }
 
                                 // Release the place likelihood buffer, to avoid memory leaks.
-                                likelyPlaces.release();
+//                                likelyPlaces.release();
 
                                 // Show a dialog offering the user the list of likely places, and add a
                                 // marker at the selected place.
@@ -478,10 +548,10 @@ public class MainActivity extends AppCompatActivity
         };
 
         // Display the dialog.
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.pick_place)
-                .setItems(mLikelyPlaceNames, listener)
-                .show();
+//        AlertDialog dialog = new AlertDialog.Builder(this)
+//                .setTitle(R.string.pick_place)
+//                .setItems(mLikelyPlaceNames, listener)
+//                .show();
     }
 
     /**
@@ -579,7 +649,7 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("MissingPermission")
     private void addGeofences() {
         if (!checkPermissions()) {
-            showSnackbar(getString(R.string.insufficient_permissions));
+            showSnackbar("Insufficient Permissions");
             return;
         }
 
@@ -626,8 +696,193 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public static void displayCount(){
+    public static void displayCount() {
         txtF.setText("Visits to Fuller labs geoFence: " + counterF);
         txtG.setText("Visits to Library geoFence: " + counterG);
+
     }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerHandler();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterHandler();
+        if(mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            simpleStepDetector.updateAccel(
+                    event.timestamp, event.values[0], event.values[1], event.values[2]);
+        }
+    }
+
+    @Override
+    public void step(long timeNs) {
+        numSteps++;
+        TvSteps.setText("Steps taken since app started: " + numSteps);
+    }
+
+    public void registerHandler() {
+        transitions = new ArrayList<>();
+
+        transitions.add(new ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.STILL)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                .build());
+
+
+        transitions.add(new ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.STILL)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                .build());
+
+
+        transitions.add(new ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.WALKING)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                .build());
+
+
+        transitions.add(new ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.WALKING)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                .build());
+
+
+        transitions.add(new ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.RUNNING)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                .build());
+
+        transitions.add(new ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.RUNNING)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                .build());
+
+
+        ActivityTransitionRequest activityTransitionRequest = new ActivityTransitionRequest(transitions);
+
+        Task<Void> task = activityRecognitionClient.requestActivityTransitionUpdates(activityTransitionRequest, transitionPendingIntent);
+
+        task.addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+//                Toast.makeText(mContext, "Transition update set up", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        task.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+//                Toast.makeText(mContext, "Transition update Failed to set up", Toast.LENGTH_LONG).show();
+//                e.printStackTrace();
+            }
+        });
+
+    }
+
+
+    public void unregisterHandler() {
+        Task<Void> task = activityRecognitionClient.removeActivityTransitionUpdates(transitionPendingIntent);
+        task.addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                transitionPendingIntent.cancel();
+//                Toast.makeText(mContext, "Remove Activity Transition Successfully", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        task.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+//                Toast.makeText(mContext, "Remove Activity Transition Failed", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+
+    public void playMusic(){
+        mediaPlayer = MediaPlayer.create(this, R.raw.beat_02);
+        mediaPlayer.setLooping(true);
+        mediaPlayer.start();
+    }
+
+    public void displayImageAndAudio(String text){
+
+        switch(text){
+            case "IN_VEHICLE":
+                mediaPlayer.stop();
+                activityImage.setImageResource(R.drawable.in_vehicle);
+                break;
+            case "RUNNING":
+                playMusic();
+                activityImage.setImageResource(R.drawable.running);
+                break;
+            case "STILL":
+                mediaPlayer.stop();
+                activityImage.setImageResource(R.drawable.still);
+                break;
+            case "WALKING":
+                playMusic();
+                activityImage.setImageResource(R.drawable.walking);
+                break;
+            default:
+                mediaPlayer.stop();
+                activityImage.setImageResource(R.drawable.still);
+                break;
+        }
+
+
+    }
+
+    public class ResponseReceiver extends BroadcastReceiver {
+        public static final String ACTION_RESP =
+                "com.mamlambo.intent.action.MESSAGE_PROCESSED";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onReceive: ");
+            //activity transition is legit. Do stuff here..
+            TextView activityText = findViewById(R.id.activityText);
+            String text = intent.getStringExtra(TransitionIntentService.PARAM_OUT_MSG);
+            startTime.add(intent.getLongExtra(TransitionIntentService.ENTER_TIME, 0));
+            endTime.add(intent.getLongExtra(TransitionIntentService.LEAVE_TIME, 0));
+            displayImageAndAudio(text);
+            String timeTaken = "";
+            Log.d(TAG, "STARTIME: " + startTime);
+            Log.d(TAG, "ENDTIME: " + endTime);
+            Log.d(TAG, "ENDTIME SIZE: " + endTime.size());
+            Log.d(TAG, "BLA: " + startTime.get(startTime.size() - 1)  + endTime.get(endTime.size() - 1));
+            if (endTime.size() != 0) {
+                if (startTime.get(startTime.size() - 1) != 0 && endTime.get(endTime.size() - 1) != 0) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+                    Date date = new Date(endTime.get(endTime.size() - 1) - startTime.get(startTime.size() - 1));
+                    timeTaken = sdf.format(date);
+                    Toast.makeText(mContext, "You have been" + text + "for" + timeTaken, Toast.LENGTH_LONG).show();
+
+                }
+
+
+            }
+            Log.d(TAG, "onReceive: START" + timeTaken);
+            activityText.setText("You are " + text);
+        }
+    }
+
+
 }
+
