@@ -207,27 +207,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             TextView activityText = findViewById(R.id.activityText);
             String text = intent.getStringExtra(TransitionIntentService.PARAM_OUT_MSG);
             activities.add(text);
-//            startTime.add(intent.getLongExtra(TransitionIntentService.ENTER_TIME, 0));
             String timeTaken = "";
-            if(activities.size() == 1) {
+            if (activities.size() == 1) {
                 startTime.add(System.currentTimeMillis());
             }
 
-            if(text != activities.get(activities.size() - 1)) {
-                Log.d(TAG, "onReceiveTEXT: "+ activities.get(activities.size() - 1));
-                Log.d(TAG, "onReceive: "+ text);
-                startTime.add(System.currentTimeMillis());
-                if(startTime.size() > 2) {
-                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-                    Date date = new Date(startTime.get(startTime.size() - 1)  + startTime.get(startTime.size() - 2));
-                    timeTaken = sdf.format(date);
-                    Log.d(TAG, "BLA: " + startTime.get(startTime.size() - 1)  + startTime.get(startTime.size() - 2));
-                    Toast.makeText(mContext, "You have been" + text + "for "  + timeTaken, Toast.LENGTH_LONG).show();
+            if (activities.size() >= 2) {
+                if (!text.equals(activities.get(activities.size() - 2))) {
+                    Log.d(TAG, "onReceiveTEXT: " + activities.get(activities.size() - 2));
+                    Log.d(TAG, "onReceive: " + text);
+                    startTime.add(System.currentTimeMillis());
+                    if (startTime.size() > 2) {
+                        Log.d(TAG, "onReceive: STARTIME" + startTime);
+                        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+                        Date date = new Date(startTime.get(startTime.size() - 1) + startTime.get(startTime.size() - 2));
+                        timeTaken = sdf.format(date);
+                        Toast.makeText(mContext, "You have been " + activities.get(activities.size() - 2) + " for " + timeTaken, Toast.LENGTH_LONG).show();
+                    }
                 }
+                displayImageAndAudio(text);
+                activityText.setText("You are " + text);
             }
-            displayImageAndAudio(text);
-            Log.d(TAG, "STARTIME: " + startTime);
-            activityText.setText("You are " + text);
         }
     }
 
