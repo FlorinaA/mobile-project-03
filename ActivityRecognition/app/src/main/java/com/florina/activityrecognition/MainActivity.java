@@ -193,6 +193,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Log.d(TAG, "onReceive: ");
             TextView result = findViewById(R.id.activityText);
             String text = intent.getStringExtra(TransitionIntentService.PARAM_OUT_MSG);
+            Log.d(TAG, "onReceive: TEXT" + text);
             result.setText(text);
         }
     }

@@ -33,6 +33,21 @@ public class TransitionIntentService extends IntentService {
             }
         });
     }
+
+    public String mapToActivity(Integer activity) {
+        switch(activity) {
+            case 0:
+                return "IN_VEHICLE";
+            case 8:
+                return "RUNNING";
+            case 3:
+                return "STILL";
+            case 7:
+                return "WALKING";
+            default:
+                return "UNKNOWN ACTIVITY";
+        }
+    }
     @Override
     protected void onHandleIntent(Intent intent) {
 
@@ -42,11 +57,12 @@ public class TransitionIntentService extends IntentService {
             if (ActivityTransitionResult.hasResult(intent)) {
                 ActivityTransitionResult result = ActivityTransitionResult.extractResult(intent);
                 for (ActivityTransitionEvent event : result.getTransitionEvents()) {
-                    Log.d(TAG, "onHandleIntent: TOAST"+ event.getTransitionType() + event.getActivityType());
-//                    Toast.makeText(this, event.getTransitionType() + "-" + event.getActivityType(), Toast.LENGTH_LONG).show();
-                    showToast("MyService is handling intent." + event.getActivityType()+ " " +event.getTransitionType());
+                    Integer activityType = event.getActivityType();
+
+                    Log.d(TAG, "onHandleIntent: TOAST"+ event.getTransitionType() + activityType);
+                    showToast("MyService is handling intent." + activityType+ " " +event.getTransitionType());
                     //7 for walking and 8 for running
-                    Log.i(TAG, "Activity Type " + event.getActivityType());
+                    Log.i(TAG, "Activity Type " +activityType);
 
                     // 0 for enter, 1 for exit
                     Log.i(TAG, "Transition Type " + event.getTransitionType());
@@ -55,7 +71,7 @@ public class TransitionIntentService extends IntentService {
                     Intent broadcastIntent = new Intent();
                     broadcastIntent.setAction(MainActivity.ResponseReceiver.ACTION_RESP);
                     broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
-                    broadcastIntent.putExtra(PARAM_OUT_MSG, event.getActivityType());
+                    broadcastIntent.putExtra(PARAM_OUT_MSG, mapToActivity(activityType));
                     sendBroadcast(broadcastIntent);
                 }
             }
