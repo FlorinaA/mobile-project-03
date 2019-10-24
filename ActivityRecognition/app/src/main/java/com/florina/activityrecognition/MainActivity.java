@@ -7,7 +7,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityRecognitionClient;
 import com.google.android.gms.location.ActivityTransition;
+import com.google.android.gms.location.ActivityTransitionEvent;
 import com.google.android.gms.location.ActivityTransitionRequest;
+import com.google.android.gms.location.ActivityTransitionResult;
 import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -23,13 +25,16 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener, StepListener {
@@ -40,13 +45,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int numSteps;
     private TextView TvSteps;
 
-//    Activity Recognition
+    //    Activity Recognition
     private static final String TAG = MainActivity.class.getSimpleName();
     private List<ActivityTransition> transitions;
     private ActivityRecognitionClient activityRecognitionClient;
     private PendingIntent transitionPendingIntent;
     private Context mContext;
     private ResponseReceiver receiver;
+
+    ArrayList<Long> startTime = new ArrayList<>();
+    ArrayList<Long> endTime = new ArrayList<>();
 
 
     @Override
@@ -103,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void step(long timeNs) {
         numSteps++;
-        TvSteps.setText("steps taken " + numSteps);
+        TvSteps.setText("Steps taken since app started: " + numSteps);
     }
 
     public void registerHandler() {
@@ -188,13 +196,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public class ResponseReceiver extends BroadcastReceiver {
         public static final String ACTION_RESP =
                 "com.mamlambo.intent.action.MESSAGE_PROCESSED";
+
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive: ");
-            TextView result = findViewById(R.id.activityText);
+            //activity transition is legit. Do stuff here..
+            TextView activityText = findViewById(R.id.activityText);
             String text = intent.getStringExtra(TransitionIntentService.PARAM_OUT_MSG);
-            Log.d(TAG, "onReceive: TEXT" + text);
-            result.setText(text);
+            startTime.add(intent.getLongExtra(TransitionIntentService.ENTER_TIME, 0));
+            endTime.add(intent.getLongExtra(TransitionIntentService.LEAVE_TIME, 0));
+            String timeTaken = "";
+            Log.d(TAG, "STARTIME: " + startTime);
+            if (endTime.size() != 0) {
+                if (startTime.get(startTime.size() - 1) != 0 && endTime.get(endTime.size() - 1) != 0) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+                    Date date = new Date(endTime.get(endTime.size() - 1) - startTime.get(startTime.size() - 1));
+                    timeTaken = sdf.format(date);
+                }
+
+            }
+            Log.d(TAG, "onReceive: START" + timeTaken);
+            activityText.setText("You are " + text);
         }
     }
 
