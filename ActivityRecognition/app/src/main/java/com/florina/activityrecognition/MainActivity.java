@@ -29,6 +29,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,13 +53,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private PendingIntent transitionPendingIntent;
     private Context mContext;
     private ResponseReceiver receiver;
-
+    private ImageView activityImage;
     ArrayList<Long> startTime = new ArrayList<>();
     ArrayList<Long> endTime = new ArrayList<>();
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setLogo(R.mipmap.ic_launcher_round);
+        getSupportActionBar().setDisplayUseLogoEnabled(true);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -70,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         numSteps = -1;
         sensorManager.registerListener(MainActivity.this, accel, SensorManager.SENSOR_DELAY_FASTEST);
 //        ACTIVITY RECOGNITION
+        activityImage = findViewById(R.id.activityImage);
         textView = findViewById(R.id.activityText);
         mContext = this;
         activityRecognitionClient = ActivityRecognition.getClient(mContext);
@@ -80,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         receiver = new ResponseReceiver();
         registerReceiver(receiver, filter);
-        registerHandler();
+//        registerHandler();
 
     }
 
@@ -159,14 +165,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         task.addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                Toast.makeText(mContext, "Transition update set up", Toast.LENGTH_LONG).show();
+//                Toast.makeText(mContext, "Transition update set up", Toast.LENGTH_LONG).show();
             }
         });
 
         task.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Toast.makeText(mContext, "Transition update Failed to set up", Toast.LENGTH_LONG).show();
+//                Toast.makeText(mContext, "Transition update Failed to set up", Toast.LENGTH_LONG).show();
 //                e.printStackTrace();
             }
         });
@@ -180,19 +186,38 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onSuccess(Void aVoid) {
                 transitionPendingIntent.cancel();
-                Toast.makeText(mContext, "Remove Activity Transition Successfully", Toast.LENGTH_LONG).show();
+//                Toast.makeText(mContext, "Remove Activity Transition Successfully", Toast.LENGTH_LONG).show();
             }
         });
 
         task.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Toast.makeText(mContext, "Remove Activity Transition Failed", Toast.LENGTH_LONG).show();
-//                e.printStackTrace();
+//                Toast.makeText(mContext, "Remove Activity Transition Failed", Toast.LENGTH_LONG).show();
             }
         });
     }
 
+    public void displayImage(String text){
+        switch(text){
+            case "IN_VEHICLE":
+                activityImage.setImageResource(R.drawable.in_vehicle);
+                break;
+            case "RUNNING":
+                activityImage.setImageResource(R.drawable.running);
+                break;
+            case "STILL":
+                activityImage.setImageResource(R.drawable.still);
+                break;
+            case "WALKING":
+                activityImage.setImageResource(R.drawable.walking);
+                break;
+            default:
+                activityImage.setImageResource(R.drawable.still);
+                break;
+        }
+
+    }
     public class ResponseReceiver extends BroadcastReceiver {
         public static final String ACTION_RESP =
                 "com.mamlambo.intent.action.MESSAGE_PROCESSED";
@@ -205,14 +230,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             String text = intent.getStringExtra(TransitionIntentService.PARAM_OUT_MSG);
             startTime.add(intent.getLongExtra(TransitionIntentService.ENTER_TIME, 0));
             endTime.add(intent.getLongExtra(TransitionIntentService.LEAVE_TIME, 0));
+            displayImage(text);
             String timeTaken = "";
             Log.d(TAG, "STARTIME: " + startTime);
+            Log.d(TAG, "ENDTIME: " + endTime);
+            Log.d(TAG, "ENDTIME SIZE: " + endTime.size());
+            Log.d(TAG, "BLA: " + startTime.get(startTime.size() - 1)  + endTime.get(endTime.size() - 1));
             if (endTime.size() != 0) {
                 if (startTime.get(startTime.size() - 1) != 0 && endTime.get(endTime.size() - 1) != 0) {
                     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
                     Date date = new Date(endTime.get(endTime.size() - 1) - startTime.get(startTime.size() - 1));
                     timeTaken = sdf.format(date);
+                    Toast.makeText(mContext, "You have been" + text + "for" + timeTaken, Toast.LENGTH_LONG).show();
+
                 }
+
 
             }
             Log.d(TAG, "onReceive: START" + timeTaken);

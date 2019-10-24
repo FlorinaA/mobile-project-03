@@ -67,7 +67,7 @@ public class TransitionIntentService extends IntentService {
                             Integer activityType = event.getActivityType();
 
                             Log.d(TAG, "onHandleIntent: TOAST"+ event.getTransitionType() + activityType);
-                            showToast("MyService is handling intent." + activityType+ " " +event.getTransitionType());
+//                            showToast("MyService is handling intent." + activityType+ " " +event.getTransitionType());
                             //7 for walking and 8 for running
                             Log.i(TAG, "Activity Type " +activityType);
                             // 0 for enter, 1 for exit

@@ -10,7 +10,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Translucent" >
-        <activity android:name=".MainActivity"  android:icon="@drawable/my_icon">
+        <activity android:name=".MainActivity"  android:icon="@drawable/icon" android:label="">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
