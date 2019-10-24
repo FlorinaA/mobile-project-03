@@ -4,6 +4,10 @@ package com.florina.activityrecognition;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 */
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.gms.location.ActivityRecognition;
@@ -17,6 +21,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -51,12 +56,12 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+//import android.support.annotation.NonNull;
+//import android.support.design.widget.Snackbar;
+//import android.support.v4.app.ActivityCompat;
+//import android.support.v4.content.ContextCompat;
+//import android.support.v7.app.AlertDialog;
+//import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -87,6 +92,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -201,8 +207,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
 
-        // Retrieve the content view that renders the map.
-        setContentView(R.layout.activity_main);
 
         // FIXME: It this is broken
         mGeofencingClient = LocationServices.getGeofencingClient(this);
@@ -228,7 +232,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         // Build the map.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+                .findFragmentById(R.id.mapaaa);
         mapFragment.getMapAsync(this);
         //GeoFence -- end
     }
@@ -432,7 +436,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.current_place_menu, menu);
+//        getMenuInflater().inflate(R.menu.current_place_menu, menu);
         return true;
     }
 
@@ -483,7 +487,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public View getInfoContents(Marker marker) {
                 // Inflate the layouts for the info window, title and snippet.
                 View infoWindow = getLayoutInflater().inflate(R.layout.custom_info_contents,
-                        (FrameLayout) findViewById(R.id.map), false);
+                        (FrameLayout) findViewById(R.id.mapaaa), false);
 
                 TextView title = ((TextView) infoWindow.findViewById(R.id.title));
                 title.setText(marker.getTitle());
@@ -577,8 +581,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                             Log.d("TAG", String.format("Lat: %6f", mLastKnownLocation.getLatitude()));
                             Log.d("TAG", String.format("Long: %6f", mLastKnownLocation.getLongitude()));
 
-                            textLat.setText(String.format("Lat: %6f", mLastKnownLocation.getLatitude()));
-                            textLong.setText(String.format("Long: %6f", mLastKnownLocation.getLongitude()));
+//                            textLat.setText(String.format("Lat: %6f", mLastKnownLocation.getLatitude()));
+//                            textLong.setText(String.format("Long: %6f", mLastKnownLocation.getLongitude()));
                             txtF.setText("Visits to Fuller labs geoFence: " + counterF);
                             txtG.setText("Visits to Library geoFence: " + counterG);
 
@@ -775,7 +779,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
     /**
-     * Shows a {@link Snackbar} using {@code text}.
+     * Shows a {@link com.google.android.material.snackbar.Snackbar} using {@code text}.
      *
      * @param text The Snackbar text.
      */
@@ -834,6 +838,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Log.d("TAG", "GeofenceBroadcast Set.");
         Intent intent = new Intent(this, GeofenceBroadcastReceiver.class);
         // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling
+        intent.setAction("SPECIAL");
         // addGeofences() and removeGeofences().
         mGeofencePendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         return mGeofencePendingIntent;
@@ -898,5 +903,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         txtG.setText("Visits to Library geoFence: " + counterG);
     }
     //GeoFence -- end
+
+
 }
 

@@ -24,7 +24,7 @@ final class Constants {
      */
     static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS =
             GEOFENCE_EXPIRATION_IN_HOURS * 60 * 60 * 1000;
-    static final float GEOFENCE_RADIUS_IN_METERS = 100; // 1 mile, 1.6 km
+    static final float GEOFENCE_RADIUS_IN_METERS = 40; // 1 mile, 1.6 km
 
     /**
      * Map for storing information about airports in the San Francisco bay area.
