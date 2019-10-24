@@ -15,37 +15,40 @@
         android:paddingTop="10dp">
 
         <TextView
-            android:id="@+id/textView5"
+            android:id="@+id/fullerT"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="25dp"
-            android:text="Visits to Fuller Labs geoFence:"
             android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:layout_marginLeft="25dp" />
 
         <TextView
-            android:id="@+id/textView3"
+            android:id="@+id/gordonT"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="25dp"
-            android:text="Visits to Library geoFence:"
             android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:layout_marginLeft="25dp" />
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/tv_steps"
             android:layout_width="match_parent"
-            android:layout_height="34dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
             android:layout_marginStart="25dp"
-            android:orientation="horizontal">
+            android:text="Steps taken since the app started:"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginLeft="25dp" />
 
-            <TextView
-                android:id="@+id/tv_steps"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Steps taken since the app started:"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+        <fragment
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            tools:context="com.example.currentplacedetailsonmap.MapsActivityCurrentPlace" />
 
         <ImageView
             android:id="@+id/activityImage"
