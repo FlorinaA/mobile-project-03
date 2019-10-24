@@ -2,6 +2,7 @@ package com.florina.activityrecognition;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityRecognitionClient;
@@ -13,13 +14,16 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -42,6 +46,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private ActivityRecognitionClient activityRecognitionClient;
     private PendingIntent transitionPendingIntent;
     private Context mContext;
+    private ResponseReceiver receiver;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,16 +62,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         numSteps = -1;
         sensorManager.registerListener(MainActivity.this, accel, SensorManager.SENSOR_DELAY_FASTEST);
 //        ACTIVITY RECOGNITION
+        textView = findViewById(R.id.activityText);
         mContext = this;
         activityRecognitionClient = ActivityRecognition.getClient(mContext);
 
         Intent intent = new Intent(this, TransitionIntentService.class);
         transitionPendingIntent = PendingIntent.getService(this, 100, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        IntentFilter filter = new IntentFilter(ResponseReceiver.ACTION_RESP);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        receiver = new ResponseReceiver();
+        registerReceiver(receiver, filter);
+        registerHandler();
 
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerHandler();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterHandler();
     }
 
     @Override
@@ -82,8 +106,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         TvSteps.setText("steps taken " + numSteps);
     }
 
-    public void registerHandler(View view) {
+    public void registerHandler() {
         transitions = new ArrayList<>();
+
+        transitions.add(new ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.STILL)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                .build());
+
+
+        transitions.add(new ActivityTransition.Builder()
+                .setActivityType(DetectedActivity.STILL)
+                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                .build());
+
 
         transitions.add(new ActivityTransition.Builder()
                 .setActivityType(DetectedActivity.WALKING)
@@ -123,14 +159,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onFailure(@NonNull Exception e) {
                 Toast.makeText(mContext, "Transition update Failed to set up", Toast.LENGTH_LONG).show();
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         });
 
     }
 
 
-    public void deregisterHandler(View view) {
+    public void unregisterHandler() {
         Task<Void> task = activityRecognitionClient.removeActivityTransitionUpdates(transitionPendingIntent);
         task.addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
@@ -144,10 +180,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onFailure(@NonNull Exception e) {
                 Toast.makeText(mContext, "Remove Activity Transition Failed", Toast.LENGTH_LONG).show();
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         });
     }
+
+    public class ResponseReceiver extends BroadcastReceiver {
+        public static final String ACTION_RESP =
+                "com.mamlambo.intent.action.MESSAGE_PROCESSED";
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onReceive: ");
+            TextView result = findViewById(R.id.activityText);
+            String text = intent.getStringExtra(TransitionIntentService.PARAM_OUT_MSG);
+            result.setText(text);
+        }
+    }
+
 
 }
 
