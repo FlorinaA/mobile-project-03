@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private ImageView activityImage;
     ArrayList<Long> startTime = new ArrayList<>();
     ArrayList<Long> endTime = new ArrayList<>();
-
+    ArrayList<String> activities= new ArrayList<>();
     private static MediaPlayer mediaPlayer;
 
 
@@ -90,7 +90,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         receiver = new ResponseReceiver();
         registerReceiver(receiver, filter);
-//        registerHandler();
 
     }
 
@@ -129,59 +128,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void registerHandler() {
-        transitions = new ArrayList<>();
-
-        transitions.add(new ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.STILL)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
-                .build());
-
-
-        transitions.add(new ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.STILL)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
-                .build());
-
-
-        transitions.add(new ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.WALKING)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
-                .build());
-
-
-        transitions.add(new ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.WALKING)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
-                .build());
-
-
-        transitions.add(new ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.RUNNING)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
-                .build());
-
-        transitions.add(new ActivityTransition.Builder()
-                .setActivityType(DetectedActivity.RUNNING)
-                .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
-                .build());
-
-
-        ActivityTransitionRequest activityTransitionRequest = new ActivityTransitionRequest(transitions);
-
-        Task<Void> task = activityRecognitionClient.requestActivityTransitionUpdates(activityTransitionRequest, transitionPendingIntent);
-
+        Task<Void> task = activityRecognitionClient.requestActivityUpdates(0, transitionPendingIntent);
         task.addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-//                Toast.makeText(mContext, "Transition update set up", Toast.LENGTH_LONG).show();
             }
         });
 
         task.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-//                Toast.makeText(mContext, "Transition update Failed to set up", Toast.LENGTH_LONG).show();
-//                e.printStackTrace();
+
             }
         });
 
@@ -194,14 +151,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onSuccess(Void aVoid) {
                 transitionPendingIntent.cancel();
-//                Toast.makeText(mContext, "Remove Activity Transition Successfully", Toast.LENGTH_LONG).show();
             }
         });
 
         task.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-//                Toast.makeText(mContext, "Remove Activity Transition Failed", Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -216,35 +171,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void displayImageAndAudio(String text){
 
         switch(text){
-            case "IN_VEHICLE":
-                mediaPlayer.stop();
+            case "Driving":
+                if(mediaPlayer != null) {
+                    mediaPlayer.stop();
+                }
                 activityImage.setImageResource(R.drawable.in_vehicle);
                 break;
-            case "RUNNING":
+            case "Running":
                 playMusic();
                 activityImage.setImageResource(R.drawable.running);
                 break;
-            case "STILL":
-                mediaPlayer.stop();
-                activityImage.setImageResource(R.drawable.still);
-                break;
-            case "WALKING":
+            case "Walking":
                 playMusic();
                 activityImage.setImageResource(R.drawable.walking);
                 break;
             default:
-                mediaPlayer.stop();
+                if(mediaPlayer != null) {
+                    mediaPlayer.stop();
+                }
                 activityImage.setImageResource(R.drawable.still);
                 break;
         }
-
 
     }
 
 
     public class ResponseReceiver extends BroadcastReceiver {
         public static final String ACTION_RESP =
-                "com.mamlambo.intent.action.MESSAGE_PROCESSED";
+                "com.florina.activityrecognition.MESSAGE_PROCESSED";
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -252,26 +206,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             //activity transition is legit. Do stuff here..
             TextView activityText = findViewById(R.id.activityText);
             String text = intent.getStringExtra(TransitionIntentService.PARAM_OUT_MSG);
-            startTime.add(intent.getLongExtra(TransitionIntentService.ENTER_TIME, 0));
-            endTime.add(intent.getLongExtra(TransitionIntentService.LEAVE_TIME, 0));
-            displayImageAndAudio(text);
+            activities.add(text);
+//            startTime.add(intent.getLongExtra(TransitionIntentService.ENTER_TIME, 0));
             String timeTaken = "";
-            Log.d(TAG, "STARTIME: " + startTime);
-            Log.d(TAG, "ENDTIME: " + endTime);
-            Log.d(TAG, "ENDTIME SIZE: " + endTime.size());
-            Log.d(TAG, "BLA: " + startTime.get(startTime.size() - 1)  + endTime.get(endTime.size() - 1));
-            if (endTime.size() != 0) {
-                if (startTime.get(startTime.size() - 1) != 0 && endTime.get(endTime.size() - 1) != 0) {
-                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-                    Date date = new Date(endTime.get(endTime.size() - 1) - startTime.get(startTime.size() - 1));
-                    timeTaken = sdf.format(date);
-                    Toast.makeText(mContext, "You have been" + text + "for" + timeTaken, Toast.LENGTH_LONG).show();
-
-                }
-
-
+            if(activities.size() == 1) {
+                startTime.add(System.currentTimeMillis());
             }
-            Log.d(TAG, "onReceive: START" + timeTaken);
+
+            if(text != activities.get(activities.size() - 1)) {
+                Log.d(TAG, "onReceiveTEXT: "+ activities.get(activities.size() - 1));
+                Log.d(TAG, "onReceive: "+ text);
+                startTime.add(System.currentTimeMillis());
+                if(startTime.size() > 2) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+                    Date date = new Date(startTime.get(startTime.size() - 1)  + startTime.get(startTime.size() - 2));
+                    timeTaken = sdf.format(date);
+                    Log.d(TAG, "BLA: " + startTime.get(startTime.size() - 1)  + startTime.get(startTime.size() - 2));
+                    Toast.makeText(mContext, "You have been" + text + "for "  + timeTaken, Toast.LENGTH_LONG).show();
+                }
+            }
+            displayImageAndAudio(text);
+            Log.d(TAG, "STARTIME: " + startTime);
             activityText.setText("You are " + text);
         }
     }
